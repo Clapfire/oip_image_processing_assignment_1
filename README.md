@@ -12,7 +12,7 @@ This project uses Jupyter notebooks and pipenv.
 
 If you have not installed pipenv, use `pip install pipenv`
 
-Once pipenv is installed, run `pipenv sync` inside the repository. This will install the packages specified in the pipfile.
+Once pipenv is installed, run `pipenv sync --dev` inside the repository. This will install the packages specified in the pipfile.
 
 To activate this project's virtualenv, run `pipenv shell`
 
