@@ -1,0 +1,8 @@
+# force linux style line endings
+* eol=lf
+
+# configure binary files
+*.tiff diff=lfs merge=lfs filter=lfs -text
+*.jpeg diff=lfs merge=lfs filter=lfs -text
+*.jpg diff=lfs merge=lfs filter=lfs -text
+*.png diff=lfs merge=lfs filter=lfs -text
