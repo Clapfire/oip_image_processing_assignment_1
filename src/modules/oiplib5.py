@@ -55,33 +55,29 @@ from scipy.signal import convolve2d
 import tkinter as tk
 from tkinter.filedialog import askopenfilename 
 
+''' Load images into memory. '''
 
-# ------------------------------------
-# LOADING, SEPARATING AND CONVERTING TO INTENSITY: 
-# ------------------------------------
 
+def loadImage(imgUrl):
+    """Load an image from a local directory.
+
+    Args:
     
-def load_image(imgURL):
-    ''' This function loads an image '''
-    img=mpimg.imread(imgURL)
-    img = img * 255
-    img = img.astype(np.uint8)
-    try:
-        imgRED = img[:,:,0]
-        imgGREEN = img[:,:,1]
-        imgBLUE = img[:,:,2]
-        return img, imgRED, imgGREEN, imgBLUE
-    except IndexError:
-        return img
+        imgUrl (string): The path to an image file.
 
-def load_image_tif(imgURL):
-    from PIL import Image
+    Returns:
 
-    im = Image.open(imgURL) # Load image
-    
-    im = np.array(im) # Convert to numpy array
-
-    return im
+        uint8Img (uint8 numpy array): A matrix with all image dimensions and channels.
+    """
+    floatImage = mpimg.imread(imgUrl)
+    fileExtension = imgUrl.split(".")[-1].lower()
+    # TIFF images define colors as an integer between 0 and 65535.
+    if fileExtension == "tiff" or fileExtension == "tif":
+        return (floatImage / 65535 * 255).astype(np.uint8)
+    # PNG images define colors as a floating point number between 0 and 1.
+    if fileExtension == "png":
+        return (floatImage * 255).astype(np.uint8)
+    return (floatImage).astype(np.uint8)
 
 def load_image_GUI():
     ''' This function loads an image, without a given path to the file, but by
@@ -90,7 +86,7 @@ def load_image_GUI():
     
     # GUI-based "getting the URL": 
     root = tk.Tk()
-    root.filename = askopenfilename(initialdir = "../Images",title = "choose your file",filetypes = (("png files","*.png"),("all files","*.*")))
+    root.filename = askopenfilename(initialdir = "../images",title = "choose your file",filetypes = (("png files","*.png"),("all files","*.*")))
     print ("... opening " + root.filename)
     imgURL = root.filename
     root.withdraw()
@@ -110,29 +106,21 @@ def crop_levels(imgINT):
     imgINT[imgINT<=0]=0
     return imgINT 
 
-# ------------------------------------
-# CONVERSION TO 1-CHANNEL INTENSITY: 
-# ------------------------------------
+''' Convert RGB images to single channel grayscale images. '''
 
-def convert2AVG(imgRED, imgGREEN, imgBLUE):
-    ''' convert to intensity by averaging '''
-    return ((imgRED.astype(np.float)+imgGREEN.astype(np.float)+imgBLUE.astype(np.float))/3.0).astype(np.uint8)
+# Convert RGB image to grayscale by averaging over all channels.
+def rgb2GrayAverage(uint8Img):
+    return ((uint8Img[:,:,0].astype(np.float)+uint8Img[:,:,1].astype(np.float)+uint8Img[:,:,1].astype(np.float))/3.0).astype(np.uint8)
 
-def convert2LUM(imgRED, imgGREEN, imgBLUE):
-    ''' convert to intensity using the lumosity method (MOST CASES!) '''
-    return (0.21*imgRED+0.72*imgGREEN+0.07*imgBLUE).astype(np.uint8)
+# Convert RGB iamge to grayscal by using the luminosity method.
+def rgb2GrayLuminosity(uint8Img):
+    return (0.21*uint8Img[:,:,0]+0.72*uint8Img[:,:,1]+0.07*uint8Img[:,:,2]).astype(np.uint8)
 
-def convert2LIGHT(imgRED, imgGREEN, imgBLUE):
-    ''' convert to intensity using the lightness method (Needs to be executed pointwise -> SLOW!) '''
-    imgLIGHT = np.zeros(imgRED.shape)
-    M, N = imgLIGHT.shape
-    for m in range(M):
-        for n in range(N):
-            imgLIGHT[m,n] = (
-                    np.max([imgRED[m,n], imgGREEN[m,n], imgBLUE[m,n]]).astype(np.float) + 
-                    np.min([imgRED[m,n], imgGREEN[m,n], imgBLUE[m,n]]).astype(np.float)
-                    )/2.0
-    return imgLIGHT.astype(np.uint8)
+''' Convert grayscale images to binary images. '''
+
+# Sets all pixels greater than the threshold to one.
+def gray2Binary(uint8Img, threshold):
+    return (uint8Img >= threshold).astype(np.uint8)
 
 # ------------------------------------
 # HISTOGRAM GENERATION: 
@@ -777,14 +765,27 @@ def hough_lines(imgBIN, Nth, Nr, K):
 # ------------------------------------
 # ------------------------------------
 
-## SIMPLE: 
+def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=5):
+    """Plot an image as a simple intensity map.
+
+    Args:
+
+        uint8Img (n-dim uint8 numpy array): An image to be displayed. May have more than a single channel.
+        title (string): A title for the image.
+        cmap (string): A colormap that defines the available color space.
+        vmin (number): The lowest pixel value in the image.
+        vmax (number): The highest pixel value in the image.
+        figsize (number): The figure size in cm.
     
-def plot_image(I, title='Intensity Image', cmap='gray', vmax=255, vmin=0):
-    ''' plot the intensity image: '''
-    fig, ax = plt.subplots()
-    plti = ax.imshow(I, cmap=cmap, vmax=vmax, vmin=vmin)
+    Returns:
+
+        fig (matplotlib figure): The figure object of the resulting plot.
+        ax (matplotlib axes): The axes object of the resulting plot.
+    """
+    fig, ax = plt.subplots(figsize=(figsize, figsize))
+    plot = ax.imshow(uint8Img, cmap=cmap, vmax=vmax, vmin=vmin)
     ax.set_title(title)
-    fig.colorbar(plti, ax=ax)    
+    fig.colorbar(plot, ax=ax)    
     return fig, ax
 
 def plot_hist(I, title='Histogram', color='tab:blue'):
@@ -848,7 +849,7 @@ def plot_image_all_hists(img, title='Combined Histograms', cmap="gray", vmax=255
     imgRED = img[:,:,0]
     imgGREEN = img[:,:,1]
     imgBLUE = img[:,:,2]
-    imgLUM = convert2LUM(imgRED, imgGREEN, imgBLUE)
+    imgLUM = rgb2GrayLuminosity(img)
     
     # plot the intensity image: 
     fig, (ax1, ax2) = plt.subplots(2, 1)
