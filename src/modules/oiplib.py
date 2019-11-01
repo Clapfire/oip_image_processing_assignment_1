@@ -65,7 +65,7 @@ def loadImage(imgUrl):
 
     Returns:
 
-        uint8Img (n-dim uint8 numpy array): A matrix with all image dimensions and channels.
+        uint8Img (n-dim uint8 numpy array): A image with all channels.
     """
     floatImage = mpimg.imread(imgUrl)
     fileExtension = imgUrl.split(".")[-1].lower()
@@ -78,11 +78,11 @@ def loadImage(imgUrl):
     return (floatImage).astype(np.uint8)
 
 def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=5):
-    """Plot an image as a simple intensity map.
+    """Display an image as a simple intensity map with a colorbar.
 
     Args:
 
-        uint8Img (n-dim uint8 numpy array): An image to be displayed. May have more than a single channel.
+        uint8Img (n-dim uint8 numpy array): An image to be displayed. May have more than a single channel. Be aware of the color map, when displaying multi-channel images.
         title (string): A title for the image.
         cmap (string): A colormap that defines the available color space.
         vmin (number): The lowest pixel value in the image.
@@ -99,6 +99,26 @@ def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=5)
     ax.set_title(title)
     fig.colorbar(plot, ax=ax)    
     return fig, ax
+
+def gray2Binary(uint8Img, threshold=128):
+    """Creates a binary image by settings all pixels below the threshold to 0 and all other to 1.
+
+    Args:
+
+        uint8Img (2-dim uint8 numpy array): An grayscale image to be converted. May have only a single channel.
+        threshold (number): Threshold value below which a pixel will be set to 0.
+
+    Returns:
+
+        uint8Img (2-dim uint8 numpy array): An single channel binary image, where each pixel has either the value 0 or 1.
+    """
+    return (uint8Img >= threshold).astype(np.uint8)
+
+
+
+
+
+
 
 def load_image_GUI():
     ''' This function loads an image, without a given path to the file, but by
@@ -146,10 +166,6 @@ def rgb2GrayLuminosity(uint8Img):
     return (0.21*uint8Img[:,:,0]+0.72*uint8Img[:,:,1]+0.07*uint8Img[:,:,2]).astype(np.uint8)
 
 ''' Convert grayscale images to binary images. '''
-
-# Sets all pixels greater than the threshold to one.
-def gray2Binary(uint8Img, threshold):
-    return (uint8Img >= threshold).astype(np.uint8)
 
 # ------------------------------------
 # HISTOGRAM GENERATION: 
