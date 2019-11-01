@@ -65,7 +65,7 @@ def loadImage(imgUrl):
 
     Returns:
 
-        uint8Img (n-dim uint8 numpy array): A image with all channels.
+        uint8Img (n-chan uint8 numpy array): A image with all channels.
     """
     floatImage = mpimg.imread(imgUrl)
     fileExtension = imgUrl.split(".")[-1].lower()
@@ -82,7 +82,7 @@ def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=5)
 
     Args:
 
-        uint8Img (n-dim uint8 numpy array): An image to be displayed. May have more than a single channel. Be aware of the color map, when displaying multi-channel images.
+        uint8Img (n-chan uint8 numpy array): An image to be displayed. May have more than a single channel. Be aware of the color map, when displaying multi-channel images.
         title (string): A title for the image.
         cmap (string): A colormap that defines the available color space.
         vmin (number): The lowest pixel value in the image.
@@ -105,19 +105,27 @@ def gray2Binary(uint8Img, threshold=128):
 
     Args:
 
-        uint8Img (2-dim uint8 numpy array): An grayscale image to be converted. May have only a single channel.
+        uint8Img (1-chan uint8 numpy array): An grayscale image to be converted. May have only a single channel.
         threshold (number): Threshold value below which a pixel will be set to 0.
 
     Returns:
 
-        uint8Img (2-dim uint8 numpy array): An single channel binary image, where each pixel has either the value 0 or 1.
+        uint8Img (1-chan uint8 numpy array): An single channel binary image, where each pixel has either the value 0 or 1.
     """
     return (uint8Img >= threshold).astype(np.uint8)
 
+def binary2Set(uint8Img):
+    """Converts a binary image into a set.
 
+    Args:
+        
+        uint8Img (1-chan uint8 numpy array): A binary image, which contains only values of 0 or 1.
 
+    Returns:
 
-
+        setImg (tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
+    """
+    return { (x, y) for x, y in np.argwhere(uint8Img == 1) }
 
 
 def load_image_GUI():
