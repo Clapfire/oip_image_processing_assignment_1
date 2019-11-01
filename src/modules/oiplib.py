@@ -53,9 +53,7 @@ from scipy.signal import convolve2d
 
 # tkinter interface module for GUI dialogues (so far only for file opening):
 import tkinter as tk
-from tkinter.filedialog import askopenfilename 
-
-''' Load images into memory. '''
+from tkinter.filedialog import askopenfilename
 
 
 def loadImage(imgUrl):
@@ -67,7 +65,7 @@ def loadImage(imgUrl):
 
     Returns:
 
-        uint8Img (uint8 numpy array): A matrix with all image dimensions and channels.
+        uint8Img (n-dim uint8 numpy array): A matrix with all image dimensions and channels.
     """
     floatImage = mpimg.imread(imgUrl)
     fileExtension = imgUrl.split(".")[-1].lower()
@@ -78,6 +76,29 @@ def loadImage(imgUrl):
     if fileExtension == "png":
         return (floatImage * 255).astype(np.uint8)
     return (floatImage).astype(np.uint8)
+
+def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=5):
+    """Plot an image as a simple intensity map.
+
+    Args:
+
+        uint8Img (n-dim uint8 numpy array): An image to be displayed. May have more than a single channel.
+        title (string): A title for the image.
+        cmap (string): A colormap that defines the available color space.
+        vmin (number): The lowest pixel value in the image.
+        vmax (number): The highest pixel value in the image.
+        figsize (number): The figure size in cm.
+    
+    Returns:
+
+        fig (matplotlib figure): The figure object of the resulting plot.
+        ax (matplotlib axes): The axes object of the resulting plot.
+    """
+    fig, ax = plt.subplots(figsize=(figsize, figsize))
+    plot = ax.imshow(uint8Img, cmap=cmap, vmax=vmax, vmin=vmin)
+    ax.set_title(title)
+    fig.colorbar(plot, ax=ax)    
+    return fig, ax
 
 def load_image_GUI():
     ''' This function loads an image, without a given path to the file, but by
@@ -108,12 +129,20 @@ def crop_levels(imgINT):
 
 ''' Convert RGB images to single channel grayscale images. '''
 
-# Convert RGB image to grayscale by averaging over all channels.
 def rgb2GrayAverage(uint8Img):
     return ((uint8Img[:,:,0].astype(np.float)+uint8Img[:,:,1].astype(np.float)+uint8Img[:,:,1].astype(np.float))/3.0).astype(np.uint8)
 
-# Convert RGB iamge to grayscal by using the luminosity method.
 def rgb2GrayLuminosity(uint8Img):
+    """Convert RGB image to grayscale by using the luminosity method.
+
+    Args:
+
+        uint8Img (3-dim uint8 numpy array): A multi-channel RGB image.
+
+    Returns:
+
+        uint8Img (2-dim uint8 numpy array): A single-channel grayscale image.
+    """
     return (0.21*uint8Img[:,:,0]+0.72*uint8Img[:,:,1]+0.07*uint8Img[:,:,2]).astype(np.uint8)
 
 ''' Convert grayscale images to binary images. '''
@@ -764,29 +793,6 @@ def hough_lines(imgBIN, Nth, Nr, K):
 # PLOTTING: 
 # ------------------------------------
 # ------------------------------------
-
-def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=5):
-    """Plot an image as a simple intensity map.
-
-    Args:
-
-        uint8Img (n-dim uint8 numpy array): An image to be displayed. May have more than a single channel.
-        title (string): A title for the image.
-        cmap (string): A colormap that defines the available color space.
-        vmin (number): The lowest pixel value in the image.
-        vmax (number): The highest pixel value in the image.
-        figsize (number): The figure size in cm.
-    
-    Returns:
-
-        fig (matplotlib figure): The figure object of the resulting plot.
-        ax (matplotlib axes): The axes object of the resulting plot.
-    """
-    fig, ax = plt.subplots(figsize=(figsize, figsize))
-    plot = ax.imshow(uint8Img, cmap=cmap, vmax=vmax, vmin=vmin)
-    ax.set_title(title)
-    fig.colorbar(plot, ax=ax)    
-    return fig, ax
 
 def plot_hist(I, title='Histogram', color='tab:blue'):
     ''' manual histogram plot (for uint8 coded intensity images) ''' 
