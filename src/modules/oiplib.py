@@ -194,6 +194,7 @@ def dilateSet(setImg, getStructuringElement=createStructuringElement()):
 
         setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
     """
+    # Rather slow (~4s). Parallelization via threads could help.
     dilatedSet = set()
     for x, y in setImg:
         dilatedSet.update(getStructuringElement((x, y)))
