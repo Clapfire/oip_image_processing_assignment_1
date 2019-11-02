@@ -115,7 +115,7 @@ def gray2Binary(uint8Img, threshold=128):
     return (uint8Img >= threshold).astype(np.uint8)
 
 def binary2Set(uint8Img):
-    """Converts a binary image into a set.
+    """Converts a binary image to a set.
 
     Args:
         
@@ -123,9 +123,83 @@ def binary2Set(uint8Img):
 
     Returns:
 
-        setImg (tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
+        setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
     """
     return { (x, y) for x, y in np.argwhere(uint8Img == 1) }
+
+def set2Binary(imgSet, size=(9, 9)):
+    """Converts a set to a binary image.
+
+    Args:
+        
+        setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
+        size (number tuple): The width w and height h of the desired image.
+
+    Returns:
+
+        uint8Img (1-chan uint8 numpy array): A binary image, which contains only values of 0 or 1.
+    """
+    uint8Img = np.zeros(size, np.uint8)
+    for x, y in imgSet:
+        if x < size[0] and y < size[1]:
+            uint8Img[x, y] = 1
+    return uint8Img
+
+def createStructuringElement(radius=1, neighborhood="8N"):
+    """Create a structuring element function based on the neighborhood and the radius.
+
+    Args:
+
+        radius (number): The radius of the structuring element excluding the center pixel.
+        neighborhood (string): 4N or 8N neighborhood definition around the center pixel. 
+    
+    Returns:
+
+        getStructuringElement (function): A function, which returns the neighborhood for a given center based on the configured radius and neighboorhood definition.
+    """
+    def getStructuringElement(center):
+        """Create a set of pixel coordinates for all neighbor elements.
+        
+        Args:
+
+            center (number tuple): A pixel coordinate tuple of the center pixel of the structuring element.
+
+        Returns:
+
+            setImg (number tuple set): A set of the foreground pixel coordinate tuples that make up the neighboorhood for the given center.
+        """
+        neighbors = set()
+        if neighborhood == "4N":
+            for x in range(center[0]-radius, center[0]+radius+1):
+                for y in range(center[1]-radius, center[1]+radius+1):
+                    if abs(center[0] - x) + abs(center[1] - y) <= radius:
+                        neighbors.add((x, y))
+        else:
+            for x in range(center[0]-radius, center[0]+radius+1):
+                for y in range(center[1]-radius, center[1]+radius+1):
+                    neighbors.add((x, y))
+        return neighbors
+    # Use partial application of function arguments to dynamically calculate the neighborhood based on previous constraints.
+    return getStructuringElement
+
+def dilateSet(setImg, getStructuringElement=createStructuringElement()):
+    """Dilates a set by a given structural element.
+
+    Args:
+
+        setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
+        getStructuringElement (function): A function that returns the structuring element for a given center pixel.
+    
+    Returns:
+
+        setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
+    """
+    dilatedSet = set()
+    for x, y in setImg:
+        dilatedSet.update(getStructuringElement((x, y)))
+    return dilatedSet
+
+
 
 
 def load_image_GUI():

@@ -1,3 +1,4 @@
 {
-  "python.formatting.provider": "black"
+  "python.formatting.provider": "black",
+  "python.pythonPath": "/home/ubuntu/.local/share/virtualenvs/oip_image_processing_assignment_1-3COkDx8O/bin/python"
 }
