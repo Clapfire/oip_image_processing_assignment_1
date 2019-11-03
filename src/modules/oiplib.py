@@ -53,35 +53,155 @@ from scipy.signal import convolve2d
 
 # tkinter interface module for GUI dialogues (so far only for file opening):
 import tkinter as tk
-from tkinter.filedialog import askopenfilename 
+from tkinter.filedialog import askopenfilename
 
 
-# ------------------------------------
-# LOADING, SEPARATING AND CONVERTING TO INTENSITY: 
-# ------------------------------------
+def loadImage(imgUrl):
+    """Load an image from a local directory.
 
+    Args:
     
-def load_image(imgURL):
-    ''' This function loads an image '''
-    img=mpimg.imread(imgURL)
-    img = img * 255
-    img = img.astype(np.uint8)
-    try:
-        imgRED = img[:,:,0]
-        imgGREEN = img[:,:,1]
-        imgBLUE = img[:,:,2]
-        return img, imgRED, imgGREEN, imgBLUE
-    except IndexError:
-        return img
+        imgUrl (string): The path to an image file.
 
-def load_image_tif(imgURL):
-    from PIL import Image
+    Returns:
 
-    im = Image.open(imgURL) # Load image
+        uint8Img (n-chan uint8 numpy array): A image with all channels.
+    """
+    floatImage = mpimg.imread(imgUrl)
+    fileExtension = imgUrl.split(".")[-1].lower()
+    # TIFF images define colors as an integer between 0 and 65535.
+    if fileExtension == "tiff" or fileExtension == "tif":
+        return (floatImage / 65535 * 255).astype(np.uint8)
+    # PNG images define colors as a floating point number between 0 and 1.
+    if fileExtension == "png":
+        return (floatImage * 255).astype(np.uint8)
+    return (floatImage).astype(np.uint8)
+
+def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=5):
+    """Display an image as a simple intensity map with a colorbar.
+
+    Args:
+
+        uint8Img (n-chan uint8 numpy array): An image to be displayed. May have more than a single channel. Be aware of the color map, when displaying multi-channel images.
+        title (string): A title for the image.
+        cmap (string): A colormap that defines the available color space.
+        vmin (number): The lowest pixel value in the image.
+        vmax (number): The highest pixel value in the image.
+        figsize (number): The figure size in cm.
     
-    im = np.array(im) # Convert to numpy array
+    Returns:
 
-    return im
+        fig (matplotlib figure): The figure object of the resulting plot.
+        ax (matplotlib axes): The axes object of the resulting plot.
+    """
+    fig, ax = plt.subplots(figsize=(figsize, figsize))
+    plot = ax.imshow(uint8Img, cmap=cmap, vmax=vmax, vmin=vmin)
+    ax.set_title(title)
+    fig.colorbar(plot, ax=ax)    
+    return fig, ax
+
+def gray2Binary(uint8Img, threshold=128):
+    """Creates a binary image by settings all pixels below the threshold to 0 and all other to 1.
+
+    Args:
+
+        uint8Img (1-chan uint8 numpy array): An grayscale image to be converted. May have only a single channel.
+        threshold (number): Threshold value below which a pixel will be set to 0.
+
+    Returns:
+
+        uint8Img (1-chan uint8 numpy array): An single channel binary image, where each pixel has either the value 0 or 1.
+    """
+    return (uint8Img >= threshold).astype(np.uint8)
+
+def binary2Set(uint8Img):
+    """Converts a binary image to a set.
+
+    Args:
+        
+        uint8Img (1-chan uint8 numpy array): A binary image, which contains only values of 0 or 1.
+
+    Returns:
+
+        setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
+    """
+    return { (x, y) for x, y in np.argwhere(uint8Img == 1) }
+
+def set2Binary(imgSet, size=(9, 9)):
+    """Converts a set to a binary image.
+
+    Args:
+        
+        setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
+        size (number tuple): The width w and height h of the desired image.
+
+    Returns:
+
+        uint8Img (1-chan uint8 numpy array): A binary image, which contains only values of 0 or 1.
+    """
+    uint8Img = np.zeros(size, np.uint8)
+    for x, y in imgSet:
+        if x < size[0] and y < size[1]:
+            uint8Img[x, y] = 1
+    return uint8Img
+
+def createStructuringElement(radius=1, neighborhood="8N"):
+    """Create a structuring element function based on the neighborhood and the radius.
+
+    Args:
+
+        radius (number): The radius of the structuring element excluding the center pixel.
+        neighborhood (string): 4N or 8N neighborhood definition around the center pixel. 
+    
+    Returns:
+
+        getStructuringElement (function): A function, which returns the neighborhood for a given center based on the configured radius and neighboorhood definition.
+    """
+    def getStructuringElement(center):
+        """Create a set of pixel coordinates for all neighbor elements.
+        
+        Args:
+
+            center (number tuple): A pixel coordinate tuple of the center pixel of the structuring element.
+
+        Returns:
+
+            setImg (number tuple set): A set of the foreground pixel coordinate tuples that make up the neighboorhood for the given center.
+        """
+        neighbors = set()
+        if neighborhood == "4N":
+            for x in range(center[0]-radius, center[0]+radius+1):
+                for y in range(center[1]-radius, center[1]+radius+1):
+                    if abs(center[0] - x) + abs(center[1] - y) <= radius:
+                        neighbors.add((x, y))
+        else:
+            for x in range(center[0]-radius, center[0]+radius+1):
+                for y in range(center[1]-radius, center[1]+radius+1):
+                    neighbors.add((x, y))
+        return neighbors
+    # Use partial application of function arguments to dynamically calculate the neighborhood based on previous constraints.
+    return getStructuringElement
+
+def dilateSet(setImg, getStructuringElement=createStructuringElement()):
+    """Dilates a set by a given structural element.
+
+    Args:
+
+        setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
+        getStructuringElement (function): A function that returns the structuring element for a given center pixel.
+    
+    Returns:
+
+        setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
+    """
+    # Rather slow (~4s). Parallelization via threads could help.
+    dilatedSet = set()
+    for x, y in setImg:
+        dilatedSet.update(getStructuringElement((x, y)))
+    return dilatedSet
+
+
+
 
 def load_image_GUI():
     ''' This function loads an image, without a given path to the file, but by
@@ -90,7 +210,7 @@ def load_image_GUI():
     
     # GUI-based "getting the URL": 
     root = tk.Tk()
-    root.filename = askopenfilename(initialdir = "../Images",title = "choose your file",filetypes = (("png files","*.png"),("all files","*.*")))
+    root.filename = askopenfilename(initialdir = "../images",title = "choose your file",filetypes = (("png files","*.png"),("all files","*.*")))
     print ("... opening " + root.filename)
     imgURL = root.filename
     root.withdraw()
@@ -110,29 +230,25 @@ def crop_levels(imgINT):
     imgINT[imgINT<=0]=0
     return imgINT 
 
-# ------------------------------------
-# CONVERSION TO 1-CHANNEL INTENSITY: 
-# ------------------------------------
+''' Convert RGB images to single channel grayscale images. '''
 
-def convert2AVG(imgRED, imgGREEN, imgBLUE):
-    ''' convert to intensity by averaging '''
-    return ((imgRED.astype(np.float)+imgGREEN.astype(np.float)+imgBLUE.astype(np.float))/3.0).astype(np.uint8)
+def rgb2GrayAverage(uint8Img):
+    return ((uint8Img[:,:,0].astype(np.float)+uint8Img[:,:,1].astype(np.float)+uint8Img[:,:,1].astype(np.float))/3.0).astype(np.uint8)
 
-def convert2LUM(imgRED, imgGREEN, imgBLUE):
-    ''' convert to intensity using the lumosity method (MOST CASES!) '''
-    return (0.21*imgRED+0.72*imgGREEN+0.07*imgBLUE).astype(np.uint8)
+def rgb2GrayLuminosity(uint8Img):
+    """Convert RGB image to grayscale by using the luminosity method.
 
-def convert2LIGHT(imgRED, imgGREEN, imgBLUE):
-    ''' convert to intensity using the lightness method (Needs to be executed pointwise -> SLOW!) '''
-    imgLIGHT = np.zeros(imgRED.shape)
-    M, N = imgLIGHT.shape
-    for m in range(M):
-        for n in range(N):
-            imgLIGHT[m,n] = (
-                    np.max([imgRED[m,n], imgGREEN[m,n], imgBLUE[m,n]]).astype(np.float) + 
-                    np.min([imgRED[m,n], imgGREEN[m,n], imgBLUE[m,n]]).astype(np.float)
-                    )/2.0
-    return imgLIGHT.astype(np.uint8)
+    Args:
+
+        uint8Img (3-dim uint8 numpy array): A multi-channel RGB image.
+
+    Returns:
+
+        uint8Img (2-dim uint8 numpy array): A single-channel grayscale image.
+    """
+    return (0.21*uint8Img[:,:,0]+0.72*uint8Img[:,:,1]+0.07*uint8Img[:,:,2]).astype(np.uint8)
+
+''' Convert grayscale images to binary images. '''
 
 # ------------------------------------
 # HISTOGRAM GENERATION: 
@@ -777,16 +893,6 @@ def hough_lines(imgBIN, Nth, Nr, K):
 # ------------------------------------
 # ------------------------------------
 
-## SIMPLE: 
-    
-def plot_image(I, title='Intensity Image', cmap='gray', vmax=255, vmin=0):
-    ''' plot the intensity image: '''
-    fig, ax = plt.subplots()
-    plti = ax.imshow(I, cmap=cmap, vmax=vmax, vmin=vmin)
-    ax.set_title(title)
-    fig.colorbar(plti, ax=ax)    
-    return fig, ax
-
 def plot_hist(I, title='Histogram', color='tab:blue'):
     ''' manual histogram plot (for uint8 coded intensity images) ''' 
     fig, ax = plt.subplots()
@@ -848,7 +954,7 @@ def plot_image_all_hists(img, title='Combined Histograms', cmap="gray", vmax=255
     imgRED = img[:,:,0]
     imgGREEN = img[:,:,1]
     imgBLUE = img[:,:,2]
-    imgLUM = convert2LUM(imgRED, imgGREEN, imgBLUE)
+    imgLUM = rgb2GrayLuminosity(img)
     
     # plot the intensity image: 
     fig, (ax1, ax2) = plt.subplots(2, 1)
