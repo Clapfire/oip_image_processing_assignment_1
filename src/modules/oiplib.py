@@ -872,7 +872,9 @@ def hough_lines(imgBIN, Nth, Nr, K):
     -> around 100x faster that the "direct" implementation ---
     '''
     # Find image center: 
-    N, M = imgBIN.shape
+    # N, M = imgBIN.shape[:,:,]
+    N = imgBIN.shape[0]
+    M = imgBIN.shape[1]
     uc, vc = np.floor_divide(M,2), np.floor_divide(N,2) # maybe just divide???
     
     # initialise increments:
