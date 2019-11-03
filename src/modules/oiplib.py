@@ -201,11 +201,6 @@ def dilateSet(setImg, getStructuringElement=createStructuringElement()):
     return dilatedSet
 
 
-def remove_legend(img):
-    """This function removes legend assuming all tiff samples have legend in 
-    the same place. Input parameter needs to be np array """
-    return img[:884,:]
-
 def load_image_GUI():
     ''' This function loads an image, without a given path to the file, but by
     opening a GUI (based on the tkinter cross-platform interface). Should work on
@@ -252,6 +247,24 @@ def rgb2GrayLuminosity(uint8Img):
     return (0.21*uint8Img[:,:,0]+0.72*uint8Img[:,:,1]+0.07*uint8Img[:,:,2]).astype(np.uint8)
 
 ''' Convert grayscale images to binary images. '''
+
+
+def separate_legend(img, t = 50):
+    """This separates legend from cluster image. Assumes legend is horizontal.
+        Thresholds the image to create a binary image, where the legend border is determined
+    Args: 
+        img (numpy array): image
+        t ( integer ): Threshold factor in the binary conversion process
+    Returns: Image, Legend """
+
+    threshimg = ip.threshold_binary2(img,t)
+    condt = np.ones(threshimg.shape[1],dtype=np.uint8)
+    b = []
+    for i in range(threshimg.shape[0]):
+        b.append(np.array_equal(threshimg[i], condt))
+    s = b.index(True)
+    return np.copy(img[:s,:]), np.copy(img[s:,:])
+
 
 # ------------------------------------
 # HISTOGRAM GENERATION: 
