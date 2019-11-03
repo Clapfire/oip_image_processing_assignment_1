@@ -201,7 +201,10 @@ def dilateSet(setImg, getStructuringElement=createStructuringElement()):
     return dilatedSet
 
 
-
+def remove_legend(img):
+    """This function removes legend assuming all tiff samples have legend in 
+    the same place. Input parameter needs to be np array """
+    return img[:884,:]
 
 def load_image_GUI():
     ''' This function loads an image, without a given path to the file, but by
