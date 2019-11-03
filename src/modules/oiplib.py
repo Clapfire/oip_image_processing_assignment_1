@@ -77,7 +77,7 @@ def loadImage(imgUrl):
         return (floatImage * 255).astype(np.uint8)
     return (floatImage).astype(np.uint8)
 
-def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=5):
+def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=(5,5)):
     """Display an image as a simple intensity map with a colorbar.
 
     Args:
@@ -94,7 +94,7 @@ def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=5)
         fig (matplotlib figure): The figure object of the resulting plot.
         ax (matplotlib axes): The axes object of the resulting plot.
     """
-    fig, ax = plt.subplots(figsize=(figsize, figsize))
+    fig, ax = plt.subplots(figsize= figsize)
     plot = ax.imshow(uint8Img, cmap=cmap, vmax=vmax, vmin=vmin)
     ax.set_title(title)
     fig.colorbar(plot, ax=ax)    
@@ -892,7 +892,7 @@ def hough_lines(imgBIN, Nth, Nr, K):
     
     # we can avoid the theta / r loop(s) by 
     # .... 1.) an outer product:
-    ith = range(Nth) 
+    ith = np.array(range(Nth)) 
     theta = dth * ith
     r = np.outer(x,np.cos(theta)) + np.outer(y,np.sin(theta))
     ir = (np.floor_divide(Nr, 2) + np.floor_divide(r,dr)).astype(np.integer)
