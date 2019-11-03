@@ -87,7 +87,7 @@ def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=(5
         cmap (string): A colormap that defines the available color space.
         vmin (number): The lowest pixel value in the image.
         vmax (number): The highest pixel value in the image.
-        figsize (number): The figure size in cm.
+        figsize ((number,number)): The figure size in cm.
     
     Returns:
 
