@@ -200,21 +200,24 @@ def dilateSet(setImg, getStructuringElement=createStructuringElement()):
         dilatedSet.update(getStructuringElement((x, y)))
     return dilatedSet
 
-def separateLegend(img, t = 50):
-    """This separates legend from cluster image. Assumes legend is horizontal.
-        Thresholds the image to create a binary image, where the legend border is determined
+def separateLegend(uint8Img, threshold = 127):
+    """This separates the legend from the cluster image. It assumes the legend is horizontal. Thresholds the image to create a binary image, where the legend border is determined.
+    
     Args: 
-        img (numpy array): image
-        t ( integer ): Threshold factor in the binary conversion process
-    Returns: Image, Legend """
-
-    threshimg = threshold_binary2(img,t)
-    condt = np.ones(threshimg.shape[1],dtype=np.uint8)
-    b = []
-    for i in range(threshimg.shape[0]):
-        b.append(np.array_equal(threshimg[i], condt))
-    s = b.index(True)
-    return np.copy(img[:s,:]), np.copy(img[s:,:])
+        
+        img (numpy array): A grayscale image.
+        threshold (number): The threshold factor in the binary conversion process.
+    
+    Returns:
+        
+        img (1-chan uint8 numpy array): The image without the legend.
+        legend (1-chan uint8 numpy array): The legend of the image.
+    """
+    binImg = gray2Binary(uint8Img, threshold)
+    condition = np.ones(binImg.shape[1], np.uint8)
+    for i in range(binImg.shape[0]):
+        if np.array_equal(binImg[i], condition):
+            return uint8Img[:i,:], uint8Img[i:,:]
 
 #------------------------------------------------------
 
