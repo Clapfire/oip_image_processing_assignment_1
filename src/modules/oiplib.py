@@ -257,7 +257,7 @@ def separate_legend(img, t = 50):
         t ( integer ): Threshold factor in the binary conversion process
     Returns: Image, Legend """
 
-    threshimg = ip.threshold_binary2(img,t)
+    threshimg = threshold_binary2(img,t)
     condt = np.ones(threshimg.shape[1],dtype=np.uint8)
     b = []
     for i in range(threshimg.shape[0]):
