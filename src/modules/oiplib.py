@@ -205,7 +205,7 @@ def separateLegend(uint8Img, threshold = 127):
     
     Args: 
         
-        img (numpy array): A grayscale image.
+        uint8Img (1-chan uint8 numpy array): A grayscale image with a legend.
         threshold (number): The threshold factor in the binary conversion process.
     
     Returns:
