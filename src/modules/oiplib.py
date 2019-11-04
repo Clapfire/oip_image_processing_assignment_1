@@ -219,7 +219,7 @@ def separateLegend(uint8Img, threshold = 127):
         if np.array_equal(binImg[i], condition):
             return uint8Img[:i,:], uint8Img[i:,:]
 
-def measurePixelSize(uint8Img, legendAnchor=(524, 15)):
+def measurePixelSize(uint8Img, legendAnchor=(524, 15), legendLength=4e-6):
     """Calculates the size of a pixel in meters based on an image legend. The function uses a simple line scan to find the length of the legend.
 
     Args:
@@ -242,7 +242,7 @@ def measurePixelSize(uint8Img, legendAnchor=(524, 15)):
             if x > xMax:
                 xMax = x
 
-    return (4e-6)/(xMax - xMin)
+    return legendLength/(xMax - xMin)
 
 def load_image_GUI():
     ''' This function loads an image, without a given path to the file, but by
