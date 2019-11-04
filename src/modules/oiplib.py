@@ -231,10 +231,10 @@ def measurePixelSize(uint8Img, legendAnchor=(524, 15), legendLength=4e-6):
         pixelSize (float): The size of a single pixel in m/px.
     """
     binImg = gray2Binary(uint8Img)
-
     scaleLine = binImg[legendAnchor[1], legendAnchor[0]:-1]
     xMin = len(scaleLine) - 1
     xMax = 0
+    
     for x in range(len(scaleLine)):
         if scaleLine[x] == 1:
             if x < xMin:
