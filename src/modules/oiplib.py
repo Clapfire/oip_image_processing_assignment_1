@@ -292,8 +292,14 @@ def labelRegions(binImg, lmin=2, lmax=0):
 
         uint8Img (1-chan uint64 numpy array): A grayscale image, which contains a specific lable for each region.
     """
+    # The label has to be bigger than 1 as the pixels will otherwise trigger a flood fill repeatedly.
+    if lmin < 2:
+        label = 2
+    else:
+        label = lmin
+
+    # Create a copy to prevent overwriting the actual image.
     labelImg = np.copy(binImg).astype(np.uint64)
-    label = lmin
     
     for x in range(binImg.shape[0]):
         for y in range(binImg.shape[1]):
