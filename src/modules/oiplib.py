@@ -294,9 +294,8 @@ def labelRegions(binImg, lmin=2, lmax=0):
     """
     # The label has to be bigger than 1 as the pixels will otherwise trigger a flood fill repeatedly.
     if lmin < 2:
-        label = 2
-    else:
-        label = lmin
+        lmin = 2
+    label = lmin
 
     # Create a copy to prevent overwriting the actual image.
     labelImg = np.copy(binImg).astype(np.uint64)
