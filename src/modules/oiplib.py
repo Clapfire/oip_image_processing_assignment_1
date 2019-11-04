@@ -234,7 +234,7 @@ def measurePixelSize(uint8Img, legendAnchor=(524, 15), legendLength=4e-6):
     scaleLine = binImg[legendAnchor[1], legendAnchor[0]:-1]
     xMin = len(scaleLine) - 1
     xMax = 0
-    
+
     for x in range(len(scaleLine)):
         if scaleLine[x] == 1:
             if x < xMin:
@@ -243,6 +243,8 @@ def measurePixelSize(uint8Img, legendAnchor=(524, 15), legendLength=4e-6):
                 xMax = x
 
     return legendLength/(xMax - xMin)
+
+# ------------------------------------------------------------------------
 
 def load_image_GUI():
     ''' This function loads an image, without a given path to the file, but by
