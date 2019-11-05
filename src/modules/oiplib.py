@@ -247,6 +247,31 @@ def separateLegend(uint8Img, threshold = 127):
         if np.array_equal(binImg[i], condition):
             return uint8Img[:i,:], uint8Img[i:,:]
 
+def measurePixelSize(uint8Img, legendAnchor=(524, 15), legendLength=4e-6):
+    """Calculates the size of a pixel in meters based on an image legend. The function uses a simple line scan to find the length of the legend.
+
+    Args:
+
+        uint8Img (1-chan uint8 numpy array): A grayscale image of the legend.
+
+    Returns:
+
+        pixelSize (float): The size of a single pixel in m/px.
+    """
+    binImg = gray2Binary(uint8Img)
+    scaleLine = binImg[legendAnchor[1], legendAnchor[0]:-1]
+    xMin = len(scaleLine) - 1
+    xMax = 0
+
+    for x in range(len(scaleLine)):
+        if scaleLine[x] == 1:
+            if x < xMin:
+                xMin = x
+            if x > xMax:
+                xMax = x
+
+    return legendLength/(xMax - xMin)
+
 def floodFill(labelImg, pixel, label):
     """Assigns a label to a connected area for a given pixel.
 
@@ -293,8 +318,13 @@ def labelRegions(binImg, lmin=2, lmax=0):
 
         uint64Img (1-chan uint64 numpy array): A grayscale image, which contains a specific label for each region.
     """
-    labelImg = np.copy(binImg).astype(np.uint64)
+    # The label has to be bigger than 1 as the pixels will otherwise trigger a flood fill repeatedly.
+    if lmin < 2:
+        lmin = 2
     label = lmin
+
+    # Create a copy to prevent overwriting the actual image.
+    labelImg = np.copy(binImg).astype(np.uint64)
     
     for x in range(binImg.shape[0]):
         for y in range(binImg.shape[1]):
