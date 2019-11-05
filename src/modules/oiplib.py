@@ -435,6 +435,21 @@ def saveImage(path, img, cmap="gray"):
     """
     plt.imsave(path, img, cmap=cmap)
 
+def removeBackgroundNoise(uint8Img, tolerance=3):
+    """Removes background noise such as areas with anthracite appearance.
+
+    Args:
+
+        uint8Img (1-chan uint8 numpy array): A grayscale image with noise.
+
+    Returns:
+
+        uint8Img (1-chan uint8 numpy array): A grayscale image without noise.
+    """
+    margin = math.floor(tolerance/2)
+    mask = (growBinary(gray2Binary(uint8Img), tolerance))[margin:-margin,margin:-margin]
+    return np.multiply(uint8Img, mask)
+
 #------------------------------------------------------
 
 def load_image_GUI():
