@@ -50,6 +50,9 @@ import matplotlib.pyplot as plt # for plotting
 import matplotlib.image as mpimg # for image handling and plotting
 import numpy as np # for all kinds of (accelerated) matrix / numerical operations
 from scipy.signal import convolve2d
+from scipy.ndimage import rotate
+from skimage import feature # for blob
+import math
 
 # tkinter interface module for GUI dialogues (so far only for file opening):
 import tkinter as tk
@@ -218,6 +221,70 @@ def separateLegend(img, t = 50):
     s = b.index(True)
     return np.copy(img[:s,:]), np.copy(img[s:,:])
 
+def getPoints(img):
+    """Uses blob to identify elements in an image, 
+    and returns an array of all the midpoints of these elements
+    
+    Args:
+        img (numpy array): a binary image
+    
+    Returns:
+        points (numpy array): an array of the same size as the original image, with only the points being 1.
+    """
+
+    blobs = feature.blob_log(img, min_sigma=1, max_sigma=25, threshold=1, exclude_border=True)
+
+    points = np.zeros(img.shape)
+
+    for blob in blobs:
+        y, x, r = blob
+        points[int(y), int(x)] = 1
+    
+    return points
+
+def divideImage(img):
+    """Divides an image horizontally through the middle.
+    
+    Args:
+        img (numpy array): an image to be divided into two.
+    
+    Returns:
+        upper (numpy array): Upper half of the original image
+        lower (numpy array): Lower half of the original image
+    """
+    upper = img[:np.floor_divide(img.shape[0], 2)] # Upper half slice
+    lower = img[np.floor_divide(img.shape[0], 2):] # Lower half slice
+
+    return upper, lower
+
+def angleBetweenPoints(upper, lower, angleThreshold=1):
+    """Finds the angle between two images, relative to the vertical axis.
+    Use the angleThreshold parameter to discard any angles above this value.
+    
+    Args:
+        upper (numpy array): The upper half of a point array
+        lower (numpy array): The lower half of a point array
+        angleThreshold (int, optional): The threshold for the angle. If the angle is below this value, it is ignored. Defaults to 1.
+    
+    Returns:
+        angles (list): [description]
+    """
+
+    angles = []
+
+    upperPoints = upper.nonzero()
+    lowerPoints = lower.nonzero()
+
+    for pointUpperY, pointUpperX in zip(upperPoints[0], upperPoints[1]):
+        for pointLowerY, pointLowerX in zip(lowerPoints[0], lowerPoints[1]):
+            angles.append(math.degrees(math.atan2(pointUpperX - pointLowerX, pointUpperY - pointLowerY)))
+
+    angles = [(angle - 90) for angle in angles if abs(angle - 90) < angleThreshold]
+
+    return angles
+
+def rotateImage(img, angle):
+    return rotate(img, angle)
 #------------------------------------------------------
 
 def load_image_GUI():
