@@ -56,6 +56,8 @@ import scipy.signal as sps
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
 
+from os import listdir
+from os.path import isfile, join
 
 def loadImage(imgUrl):
     """Load an image from a local directory.
@@ -450,6 +452,19 @@ def removeBackgroundNoise(uint8Img, tolerance=3):
     mask = (growBinary(gray2Binary(uint8Img), tolerance))[margin:-margin,margin:-margin]
     return np.multiply(uint8Img, mask)
 
+def loadImages(folder):
+    """Loads all available cluster images for further processing.
+
+    Args:
+
+        folder (string): Path to folder with cluster images.
+
+    Returns:
+
+        uint8Imgs (1-chan uint8 numpy array): A grayscale image without noise.
+    """
+    return [ rgb2GrayLuminosity(loadImage(join(folder, f))) for f in listdir(folder) if isfile(join(folder, f)) ]
+    
 #------------------------------------------------------
 
 def load_image_GUI():
