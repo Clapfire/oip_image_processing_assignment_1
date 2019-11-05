@@ -45,7 +45,8 @@ UPDATE_4, 2018-10-10:
 # IMPORTS: 
 # ------------------------------------
 
-# needed almost every time: 
+# needed almost every time:
+import math
 import numpy as np # for all kinds of (accelerated) matrix / numerical operations
 import matplotlib.pyplot as plt # for plotting
 import matplotlib.image as mpimg # for image handling and plotting
@@ -320,7 +321,7 @@ def labelRegions(binImg, lmin=2, lmax=0):
 
     Returns:
 
-        uint8Img (1-chan uint64 numpy array): A grayscale image, which contains a specific lable for each region.
+        uint64Img (1-chan uint64 numpy array): A grayscale image, which contains a specific label for each region.
     """
     # The label has to be bigger than 1 as the pixels will otherwise trigger a flood fill repeatedly.
     if lmin < 2:
@@ -404,6 +405,105 @@ def angleBetweenPoints(upper, lower, angleThreshold=1):
 
 def rotateImage(img, angle):
     return rotate(img, angle)
+def getBoundaryBoxes(uint64Img):
+    """Extracts boundary boxes from a labelled image.
+
+    Args:
+
+        uint64Img (1-chan uint64 numpy array): A grayscale image, which contains a specific label for each region.
+
+    Returns:
+
+        anchors (integer tuple list): A list which contains the anchor points of all valid boundary boxes.
+        boxSize (integer): The size of the boundary boxes.
+    """ 
+    
+    # Find the minimum and maximum coordinates for all regions in the image.
+    labelMap = {}
+    xLen = uint64Img.shape[0]
+    yLen = uint64Img.shape[1]
+    lMin = math.inf
+    lMax = -math.inf
+
+    for x in range(xLen):
+        for y in range(yLen):
+            label = uint64Img[x, y]
+            if label > 0:
+                if labelMap.get(label) is None:
+                    labelMap[label] = {
+                        "xMin": xLen - 1,
+                        "yMin": yLen - 1,
+                        "xMax": 0,
+                        "yMax": 0
+                    }
+                    
+                    if label < lMin:
+                        lMin = label
+                        
+                    if label > lMax:
+                        lMax = label
+                
+                if x < labelMap[label]["xMin"]:
+                    labelMap[label]["xMin"] = x
+                    
+                if y < labelMap[label]["yMin"]:
+                    labelMap[label]["yMin"] = y
+                
+                if x > labelMap[label]["xMax"]:
+                    labelMap[label]["xMax"] = x
+                
+                if y > labelMap[label]["yMax"]:
+                    labelMap[label]["yMax"] = y
+    
+    # Find the maximum boundary box size.
+    xSize = 0
+    ySize = 0
+    
+    for l in range(lMax - lMin):
+        label = labelMap[lMin + l]
+        
+        xDiff = label["xMax"] - label["xMin"]
+        if xDiff > xSize:
+            xSize = xDiff
+        
+        yDiff = label["yMax"] - label["yMin"]
+        if yDiff > ySize:
+            ySize = yDiff
+            
+    boxSize = max(xSize, ySize)
+
+    # Find only clusters where the boundary box is in the image.
+    xMax = xLen - 1
+    yMax = xLen - 1
+    anchors = []
+    
+    for l in range(lMax - lMin):
+        label = labelMap[lMin + l]
+        
+        xDiff = label["xMax"] - label["xMin"]
+        yDiff = label["yMax"] - label["yMin"]
+        
+        xFix = math.floor((xSize - xDiff) / 2)
+        yFix = math.floor((ySize - yDiff) / 2)
+        
+        label["xMin"] -= xFix
+        label["yMin"] -= yFix
+        
+        if label["xMin"] > 0 and label["yMin"] > 0 and label["xMin"] + xSize < xMax and label["yMin"] + ySize < yMax:
+            anchors.append((label["xMin"], label["yMin"]))
+    
+    return anchors, boxSize
+
+def saveImage(path, img, cmap="gray"):
+    """Write an image to disk.
+
+    Args:
+
+        path (string): The path to the desired output file.
+        img (image): An image.
+    """
+    plt.imsave(path, img, cmap=cmap)
+
 #------------------------------------------------------
 
 def load_image_GUI():
