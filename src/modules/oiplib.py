@@ -82,7 +82,7 @@ def loadImage(imgUrl):
         return (floatImage * 255).astype(np.uint8)
     return (floatImage).astype(np.uint8)
 
-def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=(5,5)):
+def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=(5,5), cbar=False):
     """Display an image as a simple intensity map with a colorbar.
 
     Args:
