@@ -45,11 +45,12 @@ UPDATE_4, 2018-10-10:
 # IMPORTS: 
 # ------------------------------------
 
-# needed almost every time: 
+# needed almost every time:
+import math
+import numpy as np # for all kinds of (accelerated) matrix / numerical operations
 import matplotlib.pyplot as plt # for plotting
 import matplotlib.image as mpimg # for image handling and plotting
-import numpy as np # for all kinds of (accelerated) matrix / numerical operations
-from scipy.signal import convolve2d
+import scipy.signal as sps
 
 # tkinter interface module for GUI dialogues (so far only for file opening):
 import tkinter as tk
@@ -85,9 +86,9 @@ def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=(5
         uint8Img (n-chan uint8 numpy array): An image to be displayed. May have more than a single channel. Be aware of the color map, when displaying multi-channel images.
         title (string): A title for the image.
         cmap (string): A colormap that defines the available color space.
-        vmin (number): The lowest pixel value in the image.
-        vmax (number): The highest pixel value in the image.
-        figsize ((number,number)): The figure size in cm.
+        vmin (integer): The lowest pixel value in the image.
+        vmax (integer): The highest pixel value in the image.
+        figsize ((integer, integer)): The figure size in cm.
     
     Returns:
 
@@ -100,13 +101,26 @@ def showImage(uint8Img, title='Image', cmap='gray', vmin=0, vmax=255, figsize=(5
     fig.colorbar(plot, ax=ax)    
     return fig, ax
 
+def rgb2GrayLuminosity(uint8Img):
+    """Convert RGB image to grayscale by using the luminosity method.
+
+    Args:
+
+        uint8Img (3-chan uint8 numpy array): A 3-channel RGB image.
+
+    Returns:
+
+        uint8Img (1-chan uint8 numpy array): A single-channel grayscale image.
+    """
+    return (0.21*uint8Img[:,:,0]+0.72*uint8Img[:,:,1]+0.07*uint8Img[:,:,2]).astype(np.uint8)
+
 def gray2Binary(uint8Img, threshold=128):
     """Creates a binary image by settings all pixels below the threshold to 0 and all other to 1.
 
     Args:
 
         uint8Img (1-chan uint8 numpy array): An grayscale image to be converted. May have only a single channel.
-        threshold (number): Threshold value below which a pixel will be set to 0.
+        threshold (integer): Threshold value below which a pixel will be set to 0.
 
     Returns:
 
@@ -133,7 +147,7 @@ def set2Binary(imgSet, size=(9, 9)):
     Args:
         
         setImg (number tuple set): A set of the foreground pixel coordinate tuples with a value of 1 in the binary image.
-        size (number tuple): The width w and height h of the desired image.
+        size (integer tuple): The width w and height h of the desired image.
 
     Returns:
 
@@ -150,7 +164,7 @@ def createStructuringElement(radius=1, neighborhood="8N"):
 
     Args:
 
-        radius (number): The radius of the structuring element excluding the center pixel.
+        radius (integer): The radius of the structuring element excluding the center pixel.
         neighborhood (string): 4N or 8N neighborhood definition around the center pixel. 
     
     Returns:
@@ -200,13 +214,27 @@ def dilateSet(setImg, getStructuringElement=createStructuringElement()):
         dilatedSet.update(getStructuringElement((x, y)))
     return dilatedSet
 
+def growBinary(binImg, growth=3):
+    """Will increase the amount of foreground pixels similarly to dilating. The core difference is that this method uses convolution and is thus not real dilation. The core advantage is the drastic increase in speed. To achieve a similar level of growth as in a dilation of radius `n`, the growth `m` should be `m = 1 + 2 * n`.
+
+    Args:
+
+        uint8Img (1-chan uint8 numpy array): A binary image, which contains only values of 0 or 1.
+        growth (integer): The side length of the square used to grow the particles.
+
+    Returns:
+
+        uint8Img (1-chan uint8 numpy array): A binary image, which contains only values of 0 or 1.
+    """
+    return gray2Binary(sps.convolve2d(binImg, np.ones((growth, growth), np.uint8)), 1)
+
 def separateLegend(uint8Img, threshold = 127):
     """This separates the legend from the cluster image. It assumes the legend is horizontal. Thresholds the image to create a binary image, where the legend border is determined.
     
     Args: 
         
         uint8Img (1-chan uint8 numpy array): A grayscale image with a legend.
-        threshold (number): The threshold factor in the binary conversion process.
+        threshold (integer): The threshold factor in the binary conversion process.
     
     Returns:
         
@@ -218,6 +246,194 @@ def separateLegend(uint8Img, threshold = 127):
     for i in range(binImg.shape[0]):
         if np.array_equal(binImg[i], condition):
             return uint8Img[:i,:], uint8Img[i:,:]
+
+def measurePixelSize(uint8Img, legendAnchor=(524, 15), legendLength=4e-6):
+    """Calculates the size of a pixel in meters based on an image legend. The function uses a simple line scan to find the length of the legend.
+
+    Args:
+
+        uint8Img (1-chan uint8 numpy array): A grayscale image of the legend.
+
+    Returns:
+
+        pixelSize (float): The size of a single pixel in m/px.
+    """
+    binImg = gray2Binary(uint8Img)
+    scaleLine = binImg[legendAnchor[1], legendAnchor[0]:-1]
+    xMin = len(scaleLine) - 1
+    xMax = 0
+
+    for x in range(len(scaleLine)):
+        if scaleLine[x] == 1:
+            if x < xMin:
+                xMin = x
+            if x > xMax:
+                xMax = x
+
+    return legendLength/(xMax - xMin)
+
+def floodFill(labelImg, pixel, label):
+    """Assigns a label to a connected area for a given pixel.
+
+    Args:
+
+        uint8Img (1-chan uint8 numpy array): A binary image, which contains only values of 0 or 1.
+        pixel (integer tuple): The x and y coordinate of a pixel.
+        resultSet (number set): A set of already discoverd pixels.
+    """
+    # Ignore pixels out of x coordinate boundaries.
+    if pixel[0] < 0 or pixel[0] >= labelImg.shape[0]:
+        return
+
+    # Ignore pixels out of y coordinate boundaries.
+    if pixel[1] < 0 or pixel[1] >= labelImg.shape[1]:
+        return
+
+    # Ignore background pixels.
+    if labelImg[pixel[0], pixel[1]] != 1:
+        return
+
+    # Set visited pixels to label to avoid visiting them twice.
+    labelImg[pixel[0], pixel[1]] = label
+
+    # Run algorithm on north pixel.
+    floodFill(labelImg, (pixel[0], pixel[1]-1), label)
+    # Run algorithm on south pixel.
+    floodFill(labelImg, (pixel[0], pixel[1]+1), label)
+    # Run algorithm on west pixel.
+    floodFill(labelImg, (pixel[0]-1, pixel[1]), label)
+    # Run algorithm on east pixel.
+    floodFill(labelImg, (pixel[0]+1, pixel[1]), label)
+
+def labelRegions(binImg, lmin=2, lmax=0):
+    """Identifies distinct regions within an image. 
+
+    Args:
+
+        uint8Img (1-chan uint8 numpy array): A binary image, which contains only values of 0 or 1.
+        lmin (integer): Minimum label to apply.
+        lmax (integer): Maximum label to apply.
+
+    Returns:
+
+        uint64Img (1-chan uint64 numpy array): A grayscale image, which contains a specific label for each region.
+    """
+    # The label has to be bigger than 1 as the pixels will otherwise trigger a flood fill repeatedly.
+    if lmin < 2:
+        lmin = 2
+    label = lmin
+
+    # Create a copy to prevent overwriting the actual image.
+    labelImg = np.copy(binImg).astype(np.uint64)
+    
+    for x in range(binImg.shape[0]):
+        for y in range(binImg.shape[1]):
+            if labelImg[x, y] == 1:
+                floodFill(labelImg, (x, y), label)
+                label += 1
+                if lmax != 0 and label > lmax:
+                    label = lmin
+
+    return labelImg
+
+def getBoundaryBoxes(uint64Img):
+    """Extracts boundary boxes from a labelled image.
+
+    Args:
+
+        uint64Img (1-chan uint64 numpy array): A grayscale image, which contains a specific label for each region.
+
+    Returns:
+
+        anchors (integer tuple list): A list which contains the anchor points of all valid boundary boxes.
+        boxSize (integer): The size of the boundary boxes.
+    """ 
+    
+    # Find the minimum and maximum coordinates for all regions in the image.
+    labelMap = {}
+    xLen = uint64Img.shape[0]
+    yLen = uint64Img.shape[1]
+    lMin = math.inf
+    lMax = -math.inf
+
+    for x in range(xLen):
+        for y in range(yLen):
+            label = uint64Img[x, y]
+            if label > 0:
+                if labelMap.get(label) is None:
+                    labelMap[label] = {
+                        "xMin": xLen - 1,
+                        "yMin": yLen - 1,
+                        "xMax": 0,
+                        "yMax": 0
+                    }
+                    
+                    if label < lMin:
+                        lMin = label
+                        
+                    if label > lMax:
+                        lMax = label
+                
+                if x < labelMap[label]["xMin"]:
+                    labelMap[label]["xMin"] = x
+                    
+                if y < labelMap[label]["yMin"]:
+                    labelMap[label]["yMin"] = y
+                
+                if x > labelMap[label]["xMax"]:
+                    labelMap[label]["xMax"] = x
+                
+                if y > labelMap[label]["yMax"]:
+                    labelMap[label]["yMax"] = y
+    
+    # Find the maximum boundary box size.
+    xSize = 0
+    ySize = 0
+    
+    for l in range(lMax - lMin):
+        label = labelMap[lMin + l]
+        
+        xDiff = label["xMax"] - label["xMin"]
+        if xDiff > xSize:
+            xSize = xDiff
+        
+        yDiff = label["yMax"] - label["yMin"]
+        if yDiff > ySize:
+            ySize = yDiff
+            
+    boxSize = max(xSize, ySize)
+
+    # Find only clusters where the boundary box is in the image.
+    xMax = xLen - 1
+    yMax = xLen - 1
+    anchors = []
+    
+    for l in range(lMax - lMin):
+        label = labelMap[lMin + l]
+        
+        xDiff = label["xMax"] - label["xMin"]
+        yDiff = label["yMax"] - label["yMin"]
+        
+        xFix = math.floor((xSize - xDiff) / 2)
+        yFix = math.floor((ySize - yDiff) / 2)
+        
+        label["xMin"] -= xFix
+        label["yMin"] -= yFix
+        
+        if label["xMin"] > 0 and label["yMin"] > 0 and label["xMin"] + xSize < xMax and label["yMin"] + ySize < yMax:
+            anchors.append((label["xMin"], label["yMin"]))
+    
+    return anchors, boxSize
+
+def saveImage(path, img, cmap="gray"):
+    """Write an image to disk.
+
+    Args:
+
+        path (string): The path to the desired output file.
+        img (image): An image.
+    """
+    plt.imsave(path, img, cmap=cmap)
 
 #------------------------------------------------------
 
@@ -253,18 +469,6 @@ def crop_levels(imgINT):
 def rgb2GrayAverage(uint8Img):
     return ((uint8Img[:,:,0].astype(np.float)+uint8Img[:,:,1].astype(np.float)+uint8Img[:,:,1].astype(np.float))/3.0).astype(np.uint8)
 
-def rgb2GrayLuminosity(uint8Img):
-    """Convert RGB image to grayscale by using the luminosity method.
-
-    Args:
-
-        uint8Img (3-dim uint8 numpy array): A multi-channel RGB image.
-
-    Returns:
-
-        uint8Img (2-dim uint8 numpy array): A single-channel grayscale image.
-    """
-    return (0.21*uint8Img[:,:,0]+0.72*uint8Img[:,:,1]+0.07*uint8Img[:,:,2]).astype(np.uint8)
 
 ''' Convert grayscale images to binary images. '''
 
@@ -463,7 +667,7 @@ def pedestrian_filter(imgINT, H):
 # Linear filtering by convolution
 def conv2(x, y, mode='same'):
     # mimic matlab's conv2 function: 
-    return np.rot90(convolve2d(np.rot90(x, 2), np.rot90(y, 2), mode=mode), 2)
+    return np.rot90(sps.convolve2d(np.rot90(x, 2), np.rot90(y, 2), mode=mode), 2)
 
 def filter_image(I,H):   
     # Convolution-based filtering: 
