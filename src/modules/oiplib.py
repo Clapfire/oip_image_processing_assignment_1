@@ -412,6 +412,12 @@ HISx = np.array([[-3., 0., 3.],
                 [-3., 0., 3.]])/32.
 HISy = np.transpose(HPx)
 
+# Roberts
+HRx = np.array([[0, 1],
+                [-1,0]])/2.
+
+HRy = np.transpose(HRx)            
+
 # ----------------------------------------------------------------------------
 # Laplace Filters: 
 
@@ -670,7 +676,6 @@ def img_open(I, PLH):
     return img_dilate(img_erode(I, PLH), PLH)
 
 def img_close(I, PLH):
-# PUT YOUR CODE HERE!    
     return img_erode(img_dilate(I, PLH), PLH)
 # ------------------------------------
 # COMMON STRUCTURING ELEMENTS (POINT SETS)
@@ -694,7 +699,8 @@ def detect_edges(imgINT, Filter='Sobel'):
         'Gradient': [HDx, HDy],
         'Sobel': [HSx, HSy],
         'Prewitt': [HPx, HPy],
-        'ISobel': [HISx, HISy]
+        'ISobel': [HISx, HISy],
+        'Roberts': [HRx, HRy]
     }.get(Filter, [HSx, HSy])
     # Filter the image in x- and y-direction 
     IDx = filter_image_float(imgINT, Hx)
