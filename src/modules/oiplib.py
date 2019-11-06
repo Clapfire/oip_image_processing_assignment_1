@@ -55,11 +55,15 @@ from scipy.ndimage import rotate
 from skimage import feature # for blob
 import math
 import scipy.signal as sps
+import scipy as sp
+import skimage as ski
 
 # tkinter interface module for GUI dialogues (so far only for file opening):
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
 
+from os import listdir
+from os.path import isfile, join
 
 def loadImage(imgUrl):
     """Load an image from a local directory.
@@ -504,6 +508,64 @@ def saveImage(path, img, cmap="gray"):
     """
     plt.imsave(path, img, cmap=cmap)
 
+def removeBackgroundNoise(uint8Img, tolerance=3):
+    """Removes background noise such as areas with anthracite appearance.
+
+    Args:
+
+        uint8Img (1-chan uint8 numpy array): A grayscale image with noise.
+
+    Returns:
+
+        uint8Img (1-chan uint8 numpy array): A grayscale image without noise.
+    """
+    margin = math.floor(tolerance/2)
+    mask = (growBinary(gray2Binary(uint8Img), tolerance))[margin:-margin,margin:-margin]
+    return np.multiply(uint8Img, mask)
+
+def loadImages(folder):
+    """Loads all available cluster images for further processing.
+
+    Args:
+
+        folder (string): Path to folder with cluster images.
+
+    Returns:
+
+        uint8Imgs (1-chan uint8 numpy array list): A list of grayscale images.
+    """
+    return [ rgb2GrayLuminosity(loadImage(join(folder, f))) for f in listdir(folder) if isfile(join(folder, f)) ]
+
+def labelRegionWatershed(uint8Img, scalingFactor=10):
+    """Returns a labels for connected regions.
+
+    Args:
+
+        uint8Img (1-chan uint8 numpy array): A grayscale images.
+
+    Returns:
+
+        uint64Img (1-chan uint64 numpy array): A grayscale image, which contains a specific label for each region.
+    """
+    # Rescale image to increase resolution.
+    scaledUint8Img = ski.transform.rescale(uint8Img, scalingFactor) * 255
+
+    # Erode image to image to amplify features.
+    erosionSize = math.floor(scalingFactor)
+    binImg = ski.morphology.binary_erosion(gray2Binary(scaledUint8Img), np.ones((erosionSize, erosionSize)))
+    
+    # Create a distance map for watershedding.
+    distanceImg = sp.ndimage.distance_transform_edt(binImg)
+    
+    # Retrieve local maxima from distance map.
+    footprintSize = math.floor(scalingFactor*3)
+    localMax = ski.feature.peak_local_max(distanceImg, indices=False, footprint=np.ones((footprintSize, footprintSize)), labels=binImg)
+    
+    # Run watershed algorithm.
+    labelImg = ski.morphology.watershed(-distanceImg, sp.ndimage.label(localMax)[0], mask=binImg)
+
+    return np.copy(labelImg).astype(np.uint64)
+    
 #------------------------------------------------------
 
 def load_image_GUI():
