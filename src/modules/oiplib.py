@@ -53,6 +53,8 @@ import matplotlib.image as mpimg # for image handling and plotting
 import numpy as np # for all kinds of (accelerated) matrix / numerical operations
 from scipy.ndimage import rotate
 from skimage import feature # for blob
+from skimage import draw
+from skimage import morphology
 import math
 import scipy.signal as sps
 import scipy as sp
@@ -565,7 +567,24 @@ def labelRegionWatershed(uint8Img, scalingFactor=10):
     labelImg = ski.morphology.watershed(-distanceImg, sp.ndimage.label(localMax)[0], mask=binImg)
 
     return np.copy(labelImg).astype(np.uint64)
+
+def areaToDiameter(area):
+    return (2 * math.sqrt((area / math.pi)))
+
+def dilateBead(diameter, shape, factor=10):
+
+    temp = np.zeros(shape)
     
+    circle = draw.circle(shape[0]/2, shape[1]/2, diameter/2)
+    
+    temp[circle[0], circle[1]] = 1
+    
+    temp = morphology.binary_dilation(temp, np.ones((factor, factor)))
+    
+    return np.unique(temp, return_counts=True)[1][1:]
+
+def pixelDiameterToSizenm(diameter):
+    return diameter * 8.2
 #------------------------------------------------------
 
 def load_image_GUI():
