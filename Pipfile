@@ -12,6 +12,8 @@ jupyter = "*"
 pillow = "*"
 matplotlib = "*"
 appnope = "*"
+scikit-image = "*"
+numpy = "*"
 
 [requires]
 python_version = "3"
