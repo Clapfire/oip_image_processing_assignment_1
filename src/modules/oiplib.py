@@ -410,7 +410,19 @@ def angleBetweenPoints(upper, lower, angleThreshold=1):
     return angles
 
 def rotateImage(img, angle):
+    """Rotates an image by a specified angle.
+
+    Args:
+
+        img (numpy array): The image to be rotated.
+        angle (float) : Angle to rotate the image by.
+
+    Returns:
+
+        img (numpy array): The rotated image.
+    """
     return rotate(img, angle)
+
 def getBoundaryBoxes(uint64Img):
     """Extracts boundary boxes from a labelled image.
 
@@ -569,10 +581,31 @@ def labelRegionWatershed(uint8Img, scalingFactor=10):
     return np.copy(labelImg).astype(np.uint64)
 
 def areaToDiameter(area):
+    """Returns the diameter of a circle based on a given area
+
+    Args:
+
+        area (int): The area in pixels.
+
+    Returns:
+
+        diameter (int): The diameter of the corresponding circle.
+    """
     return (2 * math.sqrt((area / math.pi)))
 
 def dilateBead(diameter, shape, factor=10):
+    """Dilates a given circle based on the diameter, image shape and dilation factor
 
+    Args:
+
+        diameter (int): The diameter of the circle.
+        shape (int): The shape of the image the circle is derived from.
+        factor (optional) (int): Dilation factor, determines the size of the selection element.
+
+    Returns:
+
+        diameter (int): The diameter of the dilated circle.
+    """
     temp = np.zeros(shape)
     
     circle = draw.circle(shape[0]/2, shape[1]/2, diameter/2)
@@ -584,6 +617,16 @@ def dilateBead(diameter, shape, factor=10):
     return np.unique(temp, return_counts=True)[1][1:]
 
 def pixelDiameterToSizenm(diameter):
+    """Returns the size of a line in nanometers, based on the shape of the image
+
+    Args:
+
+        area (int): The area in pixels.
+
+    Returns:
+
+        diameter (int): The diameter of the corresponding circle.
+    """
     return diameter * 8.2
 #------------------------------------------------------
 
