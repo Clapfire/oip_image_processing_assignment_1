@@ -629,6 +629,68 @@ def pixelToLength(length, pixelSize):
         size (float): Length in nanometer.
     """
     return length * pixelSize
+
+def arrayMax(a, **kwargs):
+    """Helper function, simply calls numpy amax with the given input"""
+    return np.amax(a, **kwargs)
+
+def unique(a, **kwargs):
+    """Helper function, simply calls numpy unique with the given input"""
+    return np.unique(a, **kwargs)
+
+def floor(a, **kwargs):
+    """Helper function, simply calls numpy floor with the given input"""
+    return np.floor(a, **kwargs).astype(np.uint8)
+
+def beadCountHist(beadCounts):
+    """Creates a histogram from a dictionary of values.
+    Scaled appropiately for bead counts"""
+    # General histogram variables.
+    maxBeadCount = max(beadCounts.keys())
+    maxOccurrenceCount = max(beadCounts.values())
+    xAxis = np.arange(1, maxBeadCount + 1)
+    yAxis = np.arange(0, math.ceil(maxOccurrenceCount / 5) + 1) * 5
+    yHist = np.zeros(maxBeadCount)
+    yHistCum = np.zeros(maxBeadCount)
+
+    # Create histogram.
+    for key, value in beadCounts.items():
+        yHist[key - 1] = value
+        
+    fig, ax = plt.subplots(figsize=(10, 10))
+    plot = ax.bar(xAxis, yHist)
+    ax.grid()
+    ax.set_axisbelow(True)
+    ax.set_title("Histogram of Clusters Per Bead Count")
+    ax.set_xlabel("Bead count")
+    ax.set_ylabel("Clusters With Bead Count")
+    ax.set_xticks(xAxis)
+    ax.set_yticks(yAxis)
+
+    return plot
+
+def beadSizeHist(beadSizes):
+    """Creates a histogram from a dictionary of values
+    Scaled appropiately for bead sizes"""
+    # General histogram variables.
+    maxBeadSize = max(beadSizes.keys())
+    maxCount = max(beadSizes.values())
+    xAxis = np.arange(1, maxBeadSize + 1)
+    yHist = np.zeros(maxBeadSize)
+
+    # Create histogram.
+    for key, value in beadSizes.items():
+        yHist[key - 1] = value
+        
+    fig, ax = plt.subplots(figsize=(10, 10))
+    plot = ax.bar(xAxis, yHist)
+    ax.grid()
+    ax.set_axisbelow(True)
+    ax.set_title("Histogram of Beads Per Size")
+    ax.set_xlabel("Bead Size (nm)")
+    ax.set_ylabel("Number of Beads")
+
+    return plot
 #------------------------------------------------------
 
 def load_image_GUI():
