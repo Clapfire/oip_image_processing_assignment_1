@@ -53,6 +53,8 @@ import matplotlib.image as mpimg # for image handling and plotting
 import numpy as np # for all kinds of (accelerated) matrix / numerical operations
 from scipy.ndimage import rotate
 from skimage import feature # for blob
+from skimage import draw
+from skimage import morphology
 import math
 import scipy.signal as sps
 import scipy as sp
@@ -408,7 +410,19 @@ def angleBetweenPoints(upper, lower, angleThreshold=1):
     return angles
 
 def rotateImage(img, angle):
+    """Rotates an image by a specified angle.
+
+    Args:
+
+        img (numpy array): The image to be rotated.
+        angle (float) : Angle to rotate the image by.
+
+    Returns:
+
+        img (numpy array): The rotated image.
+    """
     return rotate(img, angle)
+
 def getBoundaryBoxes(uint64Img):
     """Extracts boundary boxes from a labelled image.
 
@@ -565,7 +579,56 @@ def labelRegionWatershed(uint8Img, scalingFactor=10):
     labelImg = ski.morphology.watershed(-distanceImg, sp.ndimage.label(localMax)[0], mask=binImg)
 
     return np.copy(labelImg).astype(np.uint64)
+
+def areaToDiameter(area):
+    """Returns the diameter of a circle based on a given area
+
+    Args:
+
+        area (int): The area in pixels.
+
+    Returns:
+
+        diameter (int): The diameter of the corresponding circle.
+    """
+    return (2 * math.sqrt((area / math.pi)))
+
+def dilateBead(diameter, shape, factor=10):
+    """Dilates a given circle based on the diameter, image shape and dilation factor
+
+    Args:
+
+        diameter (int): The diameter of the circle.
+        shape (int): The shape of the image the circle is derived from.
+        factor (optional) (int): Dilation factor, determines the size of the selection element.
+
+    Returns:
+
+        diameter (int): The diameter of the dilated circle.
+    """
+    temp = np.zeros(shape)
     
+    circle = draw.circle(shape[0]/2, shape[1]/2, diameter/2)
+    
+    temp[circle[0], circle[1]] = 1
+    
+    temp = morphology.binary_dilation(temp, np.ones((factor, factor)))
+    
+    return np.unique(temp, return_counts=True)[1][1:]
+
+def pixelToLength(length, pixelSize):
+    """Returns the size of a line in nanometers, based on the shape of the image
+
+    Args:
+
+        length (float): The length in pixels.
+        pixelSize (float): Length of a pixel in nanometers
+
+    Returns:
+
+        size (float): Length in nanometer.
+    """
+    return length * pixelSize
 #------------------------------------------------------
 
 def load_image_GUI():
@@ -598,10 +661,11 @@ def crop_levels(imgINT):
 ''' Convert RGB images to single channel grayscale images. '''
 
 def rgb2GrayAverage(uint8Img):
+    ''' Convert RGB images to single channel grayscale images. '''
     return ((uint8Img[:,:,0].astype(np.float)+uint8Img[:,:,1].astype(np.float)+uint8Img[:,:,1].astype(np.float))/3.0).astype(np.uint8)
 
 
-''' Convert grayscale images to binary images. '''
+
 
 
 
