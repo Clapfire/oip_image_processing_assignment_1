@@ -616,18 +616,19 @@ def dilateBead(diameter, shape, factor=10):
     
     return np.unique(temp, return_counts=True)[1][1:]
 
-def pixelDiameterToSizenm(diameter):
+def pixelToLength(length, pixelSize):
     """Returns the size of a line in nanometers, based on the shape of the image
 
     Args:
 
-        area (int): The area in pixels.
+        length (float): The length in pixels.
+        pixelSize (float): Length of a pixel in nanometers
 
     Returns:
 
-        diameter (int): The diameter of the corresponding circle.
+        size (float): Length in nanometer.
     """
-    return diameter * 8.2
+    return length * pixelSize
 #------------------------------------------------------
 
 def load_image_GUI():
