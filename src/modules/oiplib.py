@@ -660,10 +660,11 @@ def crop_levels(imgINT):
 ''' Convert RGB images to single channel grayscale images. '''
 
 def rgb2GrayAverage(uint8Img):
+    ''' Convert RGB images to single channel grayscale images. '''
     return ((uint8Img[:,:,0].astype(np.float)+uint8Img[:,:,1].astype(np.float)+uint8Img[:,:,1].astype(np.float))/3.0).astype(np.uint8)
 
 
-''' Convert grayscale images to binary images. '''
+
 
 
 
