@@ -13101,14 +13101,16 @@ Use (and extend) you image processing library to automatically measure:</p>
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="Overview-of-Process">Overview of Process<a class="anchor-link" href="#Overview-of-Process">&#182;</a></h1><h2 id="Flowchart-of-Process">Flowchart of Process<a class="anchor-link" href="#Flowchart-of-Process">&#182;</a></h2><h2><center>Process Flowchart</center></h2><p><img src="../images/Process_Diagram.png" width=250, title="Process Flowchart"></p>
 <p>The steps taken to complete the tasks are as follows:</p>
-<h3 id="1.-Load-and-crop-image">1. Load and crop image<a class="anchor-link" href="#1.-Load-and-crop-image">&#182;</a></h3>
+<p style="page-break-before: always"></p><h3 id="1.-Load-and-crop-image">1. Load and crop image<a class="anchor-link" href="#1.-Load-and-crop-image">&#182;</a></h3>
 <pre><code>1. Load the image into Python
-2. Split the image into the legend and the clusters
-3. Save images to disk/cache
+2. The image is converted to binary
+3. A single, unbroken horizontal line is found. The coordinates of this line is used to split the image.
+4. Split the image into the legend and the clusters
+5. Save images to disk/cache
 
 </code></pre>
 <h3><center>Load and Crop Image</center></h3><p><img src="../images/1.png" width=150, title="Load and Crop Image"></p>
-<h3 id="2.-Find-the-pixel-size-relative-to-the-real-world">2. Find the pixel size relative to the real world<a class="anchor-link" href="#2.-Find-the-pixel-size-relative-to-the-real-world">&#182;</a></h3><p>For this step, we use the legend image we created in step 1.</p>
+<p style="page-break-before: always"></p><h3 id="2.-Find-the-pixel-size-relative-to-the-real-world">2. Find the pixel size relative to the real world<a class="anchor-link" href="#2.-Find-the-pixel-size-relative-to-the-real-world">&#182;</a></h3><p>For this step, we use the legend image we created in step 1.</p>
 
 <pre><code>1. Use a line scan to get the first and last pixel of the scale
 2. Find the length using the first and last pixel
@@ -13116,7 +13118,7 @@ Use (and extend) you image processing library to automatically measure:</p>
 
 </code></pre>
 <h3><center>Finding the Pixel Size Relative to Real World</center></h3><p><img src="../images/2.png" width=150, title="Finding the Pixel Size Relative to Real World"></p>
-<h3 id="3.-Segment-the-image-into-clusters">3. Segment the image into clusters<a class="anchor-link" href="#3.-Segment-the-image-into-clusters">&#182;</a></h3><p>For this step, we use the cluster image we created in step 1.</p>
+<p style="page-break-before: always"></p><h3 id="3.-Segment-the-image-into-clusters">3. Segment the image into clusters<a class="anchor-link" href="#3.-Segment-the-image-into-clusters">&#182;</a></h3><p>For this step, we use the cluster image we created in step 1.</p>
 
 <pre><code>1. Convert the image to binary (using thresholding)
 2. Dilate the image using convolution
@@ -13126,9 +13128,10 @@ Use (and extend) you image processing library to automatically measure:</p>
 
 </code></pre>
 <h3><center>Segment Image Into Clusters</center></h3><p><img src="../images/3.png" width=150, title="Segment Image Into Clusters"></p>
-<h3 id="4.-Find-the-number-of-beads-in-each-cluster">4. Find the number of beads in each cluster<a class="anchor-link" href="#4.-Find-the-number-of-beads-in-each-cluster">&#182;</a></h3><p>For this step, we use the cluster images from step 3. The steps are performed for each cluster.</p>
+<p style="page-break-before: always"></p><h3 id="4.-Find-the-number-of-beads-in-each-cluster">4. Find the number of beads in each cluster<a class="anchor-link" href="#4.-Find-the-number-of-beads-in-each-cluster">&#182;</a></h3><p>For this step, we use the cluster images from step 3. The steps are performed for each cluster.</p>
 
-<pre><code>1. Scale image to increase resolution
+<pre><code>1. Scale image to increase resolution.
+   This creates a higher pixel density, making other processes like watershedding more effective
 2. Erode image to amplify features
 3. Create distance map for watershedding
 4. Perform the watershed algorithm
@@ -13137,7 +13140,7 @@ Use (and extend) you image processing library to automatically measure:</p>
 </code></pre>
 <p>After these steps are performed for every cluster, the values are used to create a histogram of number of beads per cluster.</p>
 <h3><center>Find the Number of Beads In Each Cluster</center></h3><p><img src="../images/4.png" width=500, title="Find the Number of Beads In Each Cluster"></p>
-<h3 id="5.-Find-the-size-of-each-bead-in-each-cluster">5. Find the size of each bead in each cluster<a class="anchor-link" href="#5.-Find-the-size-of-each-bead-in-each-cluster">&#182;</a></h3><p>For this step, we use the cluster images from step 3. The steps are performed for each cluster.</p>
+<p style="page-break-before: always"></p><h3 id="5.-Find-the-size-of-each-bead-in-each-cluster">5. Find the size of each bead in each cluster<a class="anchor-link" href="#5.-Find-the-size-of-each-bead-in-each-cluster">&#182;</a></h3><p>For this step, we use the cluster images from step 3. The steps are performed for each cluster.</p>
 
 <pre><code>1. Scale image to increase resolution
 2. Erode image to amplify features
@@ -13153,7 +13156,7 @@ Use (and extend) you image processing library to automatically measure:</p>
 </code></pre>
 <p>After these steps are performed, the values are used to create a histogram of number of beads per cluster.</p>
 <h3><center>Find the Size of Each Bead In Each Cluster</center></h3><p><img src="../images/5.png" width=500, title="Find the Size of Each Bead In Each Cluster"></p>
-
+<p style="page-break-before: always"></p>
 </div>
 </div>
 </div>
@@ -13194,7 +13197,7 @@ Use (and extend) you image processing library to automatically measure:</p>
 
 <div class="output_text output_subarea output_execute_result">
 <pre>(&lt;Figure size 1000x1000 with 1 Axes&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0x1d328850&gt;)</pre>
+ &lt;matplotlib.axes._subplots.AxesSubplot at 0x1d8177d0&gt;)</pre>
 </div>
 
 </div>
@@ -13206,9 +13209,11 @@ Use (and extend) you image processing library to automatically measure:</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<ol>
-<li>Split the image into the legend and the clusters</li>
-</ol>
+
+<pre><code>2. The image is converted to binary
+3. A single, unbroken horizontal line is found. The coordinates of this line is used to split the image.
+4. Split the image into the legend and the clusters
+5. Save images to disk/cache</code></pre>
 
 </div>
 </div>
@@ -13261,7 +13266,7 @@ We save these images for later use.</p>
 
 <div class="output_text output_subarea output_execute_result">
 <pre>(&lt;Figure size 720x720 with 1 Axes&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0x1d9d7d50&gt;)</pre>
+ &lt;matplotlib.axes._subplots.AxesSubplot at 0x1deb8cf0&gt;)</pre>
 </div>
 
 </div>
@@ -13388,7 +13393,7 @@ We save these images for later use.</p>
 
 <div class="output_text output_subarea output_execute_result">
 <pre>(&lt;Figure size 720x720 with 1 Axes&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0x1dd39290&gt;)</pre>
+ &lt;matplotlib.axes._subplots.AxesSubplot at 0x1d9acfd0&gt;)</pre>
 </div>
 
 </div>
@@ -13447,7 +13452,7 @@ We save these images for later use.</p>
 
 <div class="output_text output_subarea output_execute_result">
 <pre>(&lt;Figure size 720x720 with 1 Axes&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0x6013970&gt;)</pre>
+ &lt;matplotlib.axes._subplots.AxesSubplot at 0x1e20f190&gt;)</pre>
 </div>
 
 </div>
@@ -13506,7 +13511,7 @@ We save these images for later use.</p>
 
 <div class="output_text output_subarea output_execute_result">
 <pre>(&lt;Figure size 720x720 with 1 Axes&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0x1d3310b0&gt;)</pre>
+ &lt;matplotlib.axes._subplots.AxesSubplot at 0x1d8230f0&gt;)</pre>
 </div>
 
 </div>
@@ -13594,7 +13599,7 @@ We save these images for later use.</p>
 
 <div class="output_text output_subarea output_execute_result">
 <pre>(&lt;Figure size 720x720 with 1 Axes&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0x1de50ef0&gt;)</pre>
+ &lt;matplotlib.axes._subplots.AxesSubplot at 0x1e355f10&gt;)</pre>
 </div>
 
 </div>
@@ -13726,12 +13731,12 @@ We save these images for later use.</p>
 <h3 id="5.-Find-the-size-of-each-bead-in-each-cluster">5. Find the size of each bead in each cluster<a class="anchor-link" href="#5.-Find-the-size-of-each-bead-in-each-cluster">&#182;</a></h3><p>For this step, we use the cluster images from step 3. The steps are performed for each cluster.</p>
 
 <pre><code>1. Watershed the cluster using the same process as step 4.
-5. Using the area of each label, approximate a circle with the same area.
-6. Dilate circles to compensate for the erosion in step 5.2.
-7. Find area of dilated circles
-8. Use dilated areas to approximate new circles
-9. Find the diameters of these circles
-10. Convert the diameters from pixels to real world size using the value found in step 2.</code></pre>
+2. Using the area of each label, approximate a circle with the same area.
+3. Dilate circles to compensate for the erosion in step 5.2.
+4. Find area of dilated circles
+5. Use dilated areas to approximate new circles
+6. Find the diameters of these circles
+7. Convert the diameters from pixels to real world size using the value found in step 2.</code></pre>
 
 </div>
 </div>
